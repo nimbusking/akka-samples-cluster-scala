@@ -2,18 +2,19 @@ package sample.cluster.transformation
 
 import language.postfixOps
 import scala.concurrent.duration._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.actor.Terminated
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Terminated}
+import akka.cluster.Cluster
+import akka.event.LogSource
+import akka.event.slf4j.Logger
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import kamon.Kamon
+
 import java.util.concurrent.atomic.AtomicInteger
 
 //#frontend
-class TransformationFrontend extends Actor {
+class TransformationFrontend extends Actor with ActorLogging {
 
   var backends = IndexedSeq.empty[ActorRef]
   var jobCounter = 0
@@ -23,6 +24,7 @@ class TransformationFrontend extends Actor {
       sender() ! JobFailed("Service unavailable, try again later", job)
 
     case job: TransformationJob =>
+      log.info("TransformationFrontend get TransformationJob... and start to forword")
       jobCounter += 1
       backends(jobCounter % backends.size) forward job
 
@@ -53,8 +55,10 @@ object TransformationFrontend {
     import system.dispatcher
     system.scheduler.schedule(2.seconds, 2.seconds) {
       implicit val timeout = Timeout(5 seconds)
+//      Kamon.currentSpan().id.toString
       (frontend ? TransformationJob("hello-" + counter.incrementAndGet())) onSuccess {
-        case result => println(result)
+        case result =>
+          system.log.info("TransformationFrontend get result:{}", result)
       }
     }
 

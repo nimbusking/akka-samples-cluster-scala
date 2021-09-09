@@ -1,14 +1,17 @@
 package sample.cluster.transformation
 
-object TransformationApp {
+import kamon.Kamon
 
-  def main(args: Array[String]): Unit = {
-    // starting 2 frontend nodes and 3 backend nodes
-    TransformationFrontend.main(Seq("2551").toArray)
-    TransformationBackend.main(Seq("2552").toArray)
-    TransformationBackend.main(Array.empty)
-    TransformationBackend.main(Array.empty)
-    TransformationFrontend.main(Array.empty)
-  }
+object TransformationApp extends App {
+  Kamon.init()
+//  Kamon.runWithSpan(Kamon.spanBuilder("Level 3").start(), finishSpan = true) {
+//
+//  }
+  // starting 2 frontend nodes and 3 backend nodes
+  TransformationFrontend.main(Seq("2551").toArray)
+  TransformationBackend.main(Seq("2552").toArray)
+  TransformationBackend.main(Array.empty)
+  TransformationBackend.main(Array.empty)
+  TransformationFrontend.main(Array.empty)
 
 }

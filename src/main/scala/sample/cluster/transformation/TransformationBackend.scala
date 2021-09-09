@@ -2,11 +2,7 @@ package sample.cluster.transformation
 
 import language.postfixOps
 import scala.concurrent.duration._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.actor.RootActorPath
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, RootActorPath}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.CurrentClusterState
 import akka.cluster.ClusterEvent.MemberUp
@@ -15,7 +11,7 @@ import akka.cluster.MemberStatus
 import com.typesafe.config.ConfigFactory
 
 //#backend
-class TransformationBackend extends Actor {
+class TransformationBackend extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
 
@@ -25,7 +21,9 @@ class TransformationBackend extends Actor {
   override def postStop(): Unit = cluster.unsubscribe(self)
 
   def receive = {
-    case TransformationJob(text) => sender() ! TransformationResult(text.toUpperCase)
+    case TransformationJob(text) =>
+      log.info("TransformationBackend get job notification and start to tell result message.")
+      sender() ! TransformationResult(text.toUpperCase)
     case state: CurrentClusterState =>
       state.members.filter(_.status == MemberStatus.Up) foreach register
     case MemberUp(m) => register(m)
